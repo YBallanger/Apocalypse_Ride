@@ -5,51 +5,71 @@ using Unity.VisualScripting;
 
 public class CarController : MonoBehaviour
 {
-    public TextMeshProUGUI txtSpeed;
-    public WheelCollider front_left;
-    public WheelCollider front_right;
-    public WheelCollider rear_left;
-    public WheelCollider rear_right;
-    public float torque;
-    public float speed;
-    public float maxSpeed = 200f;
-    public int brake = 10000;
-    public float coafAcceleration = 10f;
-    public float wheelAngleMax = 10f;
 
+    private float moveInput;
+    private float turnInput;
+    private bool isCarGrounded;
+
+    public float forwardSpeed;
+    public float reverseSpeed;
+    public float turnSpeed;
+    public Rigidbody sphereRB;
+    public LayerMask groundLayer;
+
+    public float airDrag;
+    public float groundDrag;
+
+    void Start()
+    {
+        sphereRB.transform.parent = null;
+
+
+
+    }
     private void Update()
     {
 
-        //Affichage vitesse
-        speed = GetComponent<Rigidbody>().linearVelocity.magnitude * 3.6f;
-        txtSpeed.text = "Speed : " + (int)speed;
-        //Accelération
-        if(Input.GetKey(KeyCode.UpArrow) && speed < maxSpeed)
+        // Son du moteur
+        // GetComponent<AudioSource>().pitch = Mathf.Clamp(speed / maxSpeed + 0.5f, 0f, 1.5f);
+
+        moveInput = Input.GetAxisRaw("Vertical");
+        turnInput = Input.GetAxisRaw("Horizontal");
+        moveInput *= moveInput > 0 ? forwardSpeed : reverseSpeed;
+
+        //Set car position to sphere
+        transform.position = sphereRB.transform.position;
+
+        float newRotation = turnInput * turnSpeed * Time.deltaTime * Input.GetAxisRaw("Vertical");
+        transform.Rotate(0, newRotation, 0, Space.World);
+
+        RaycastHit hit;
+        isCarGrounded = Physics.Raycast(transform.position, -transform.up, out hit, 1f, groundLayer);
+
+        transform.rotation = Quaternion.FromToRotation(transform.up, hit.normal) * transform.rotation;
+       
+        if(isCarGrounded)
         {
-            rear_left.brakeTorque = 0;
-            rear_right.brakeTorque = 0;
-            rear_left.motorTorque = Input.GetAxis("Vertical") * torque * coafAcceleration * Time.deltaTime;
-            rear_right.motorTorque = Input.GetAxis("Vertical") * torque * coafAcceleration * Time.deltaTime;
+            sphereRB.linearDamping = groundDrag;
+            sphereRB.linearDamping = groundDrag;
         }
+        else
+        {
+            sphereRB.linearDamping = airDrag;
 
-        //Décélération
-        if(!Input.GetKey(KeyCode.UpArrow) || speed > maxSpeed) {
-            rear_left.motorTorque = 0;
-            rear_right.motorTorque = 0;
-            rear_left.brakeTorque = brake * coafAcceleration * Time.deltaTime;
-            rear_right.brakeTorque = brake * coafAcceleration * Time.deltaTime;
         }
-
-        //Direction
-        front_left.steerAngle = Input.GetAxis("Horizontal") * wheelAngleMax;
-        front_right.steerAngle = Input.GetAxis("Horizontal") * wheelAngleMax;
-        
     }
-    void Start()
+
+    private void FixedUpdate()
     {
 
+        if (isCarGrounded)
+        {
+            sphereRB.AddForce(transform.forward * moveInput, ForceMode.Acceleration);
+        }
+        else
+        {
+            sphereRB.AddForce(transform.up * -20f);
+        }
     }
 
-
-    
 }
