@@ -1,4 +1,8 @@
 using UnityEngine;
+using TMPro;
+using UnityEngine.SceneManagement;
+using System.Collections.Generic;
+
 
 public class CarController2 : MonoBehaviour
 {
@@ -33,15 +37,28 @@ public class CarController2 : MonoBehaviour
     private Vector3 currentCarLocalVelocity = Vector3.zero;
     private float carVelocityRatio = 0;
 
+    private int score;
+    public TextMeshProUGUI scoreText;
+
+    public List<GameObject> checkpoints = new List<GameObject>();
+    private int currentCheckpointIndex;
+
+
     private void Start()
     {
         carRB = GetComponent<Rigidbody>();
+        score = 0;
+        SetScoreText();
     }
 
     // Update is called once per frame
     void Update()
     {
         GetPlayerInput();
+        if(Input.GetKey(KeyCode.Escape))
+        {
+            SceneManager.LoadScene("MenuScene");
+        }
     }
 
     void FixedUpdate()
@@ -160,6 +177,40 @@ public class CarController2 : MonoBehaviour
                 wheelsIsGrounded[i] = 0;
 
                 Debug.DrawLine(rayPoints[i].position, rayPoints[i].position + (wheelRadius + maxLength) * -rayPoints[i].up, Color.green);
+            }
+        }
+    }
+
+    void OnTriggerEnter(Collider other)
+    {
+        if (other.gameObject.CompareTag("Gold"))
+        {
+            other.gameObject.SetActive(false);
+            score += 1;
+            SetScoreText();
+        }
+
+        if (other.gameObject.CompareTag("Checkpoint"))
+        {
+            CheckpointPassed(other.gameObject);
+        }
+    }
+
+    void SetScoreText()
+    {
+        scoreText.text = "Score: " + score.ToString();
+    }
+
+    private void CheckpointPassed(GameObject checkpoint)
+    {
+        if (checkpoints[currentCheckpointIndex] == checkpoint)
+        {
+            Debug.Log("Checkpoint " + currentCheckpointIndex + " validé !");
+            currentCheckpointIndex++;
+
+            if (currentCheckpointIndex >= checkpoints.Count)
+            {
+                SceneManager.LoadScene("MenuScene");
             }
         }
     }
