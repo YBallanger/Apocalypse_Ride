@@ -43,12 +43,17 @@ public class CarController2 : MonoBehaviour
     public List<GameObject> checkpoints = new List<GameObject>();
     private int currentCheckpointIndex;
 
+    [Header("Health System")]
+    [SerializeField] private int health = 3;
+    public TextMeshProUGUI healthText;
+
 
     private void Start()
     {
         carRB = GetComponent<Rigidbody>();
         score = 0;
         SetScoreText();
+        SetHealthText();
     }
 
     // Update is called once per frame
@@ -194,6 +199,28 @@ public class CarController2 : MonoBehaviour
         {
             CheckpointPassed(other.gameObject);
         }
+
+        if (other.gameObject.CompareTag("Zombie"))
+        {
+            other.gameObject.SetActive(false);
+            TakeDamage(1);
+        }
+    }
+
+    void TakeDamage(int damage)
+    {
+        health -= damage;
+        SetHealthText();
+
+        if (health <= 0)
+        {
+            SceneManager.LoadScene("MenuScene");
+        }
+    }
+
+    void SetHealthText()
+    {
+        healthText.text = "PV: " + health.ToString();
     }
 
     void SetScoreText()
