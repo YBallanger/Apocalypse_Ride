@@ -3,7 +3,6 @@ using TMPro;
 using UnityEngine.SceneManagement;
 using System.Collections.Generic;
 
-
 public class CarController2 : MonoBehaviour
 {
     [Header("References")]
@@ -47,6 +46,10 @@ public class CarController2 : MonoBehaviour
     [SerializeField] private int health = 3;
     public TextMeshProUGUI healthText;
 
+    [Header("Missile Settings")]
+    public GameObject missilePrefab;
+    public Transform missileSpawnPoint;
+    public float missileSpeed = 50f;
 
     private void Start()
     {
@@ -56,13 +59,17 @@ public class CarController2 : MonoBehaviour
         SetHealthText();
     }
 
-    // Update is called once per frame
     void Update()
     {
         GetPlayerInput();
-        if(Input.GetKey(KeyCode.Escape))
+        if (Input.GetKey(KeyCode.Escape))
         {
             SceneManager.LoadScene("MenuScene");
+        }
+
+        if (Input.GetKeyDown(KeyCode.F))
+        {
+            ShootMissile();
         }
     }
 
@@ -99,11 +106,9 @@ public class CarController2 : MonoBehaviour
         currentCarLocalVelocity = transform.InverseTransformDirection(carRB.linearVelocity);
         carVelocityRatio = currentCarLocalVelocity.z / maxSpeed;
     }
-
     #endregion
 
     #region Input Handling
-
     private void GetPlayerInput()
     {
         moveInput = Input.GetAxis("Vertical");
@@ -112,7 +117,6 @@ public class CarController2 : MonoBehaviour
     #endregion
 
     #region Movement
-
     private void Movement()
     {
         if(isGrounded)
@@ -149,7 +153,6 @@ public class CarController2 : MonoBehaviour
 
         carRB.AddForceAtPosition(dragForce, carRB.worldCenterOfMass, ForceMode.Acceleration);
     }
-
     #endregion
 
     private void Suspension()
@@ -232,7 +235,7 @@ public class CarController2 : MonoBehaviour
     {
         if (checkpoints[currentCheckpointIndex] == checkpoint)
         {
-            Debug.Log("Checkpoint " + currentCheckpointIndex + " valid� !");
+            Debug.Log("Checkpoint " + currentCheckpointIndex + " validé !");
             currentCheckpointIndex++;
 
             if (currentCheckpointIndex >= checkpoints.Count)
@@ -240,5 +243,19 @@ public class CarController2 : MonoBehaviour
                 SceneManager.LoadScene("MenuScene");
             }
         }
+    }
+
+    // Fonction pour tirer le missile
+    private void ShootMissile()
+    {
+        // Créer le missile au missileSpawnPoint
+        GameObject missile = Instantiate(missilePrefab, missileSpawnPoint.position, missileSpawnPoint.rotation);
+
+        // Appliquer une force au missile dans la direction de la voiture
+        Rigidbody missileRB = missile.GetComponent<Rigidbody>();
+        missileRB.linearVelocity = missileSpawnPoint.forward * missileSpeed;  // La direction de lancement est forward, avec la vitesse
+
+        // Appliquer une rotation supplémentaire de 90° sur l'axe Z
+        missile.transform.Rotate(90, 0, 0);  // Rotation de 90° autour de l'axe Z
     }
 }
